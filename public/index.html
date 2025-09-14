@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>tag.to</title>
+<style>
+#support-btn { position: fixed; top: 10px; left: 10px; }
+</style>
+</head>
+<body>
+<a id="support-btn" href="https://ctee.kr/place/tag">후원하기</a>
+<h1>tag.to</h1>
+<form id="shorten-form">
+  <input type="text" id="url" placeholder="원본 URL" required />
+  <input type="text" id="tags" placeholder="태그 (쉼표로 구분)" required />
+  <button type="submit">생성</button>
+</form>
+<div id="result"></div>
+<script>
+document.getElementById('shorten-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const originalUrl = document.getElementById('url').value;
+  const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(t => t);
+  const res = await fetch('/shorten', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ originalUrl, tags })
+  });
+  const data = await res.json();
+  if (data.shortUrl) {
+    const a = document.createElement('a');
+    a.href = data.shortUrl;
+    a.textContent = data.shortUrl;
+    a.target = '_blank';
+    const result = document.getElementById('result');
+    result.innerHTML = '';
+    result.appendChild(a);
+  } else if (data.error) {
+    document.getElementById('result').textContent = data.error;
+  }
+});
+</script>
+</body>
+</html>
