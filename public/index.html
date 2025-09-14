@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>tag.to</title>
+<style>
+body { font-family: sans-serif; margin: 0; padding: 0; }
+#donate { position: fixed; top: 10px; left: 10px; }
+main { margin-top: 60px; display: flex; flex-direction: column; align-items: center; }
+form { display: flex; flex-direction: column; width: 300px; gap: 8px; }
+</style>
+</head>
+<body>
+<a id="donate" href="https://ctee.kr/place/tag">후원하기</a>
+<main>
+<h1>tag.to</h1>
+<form id="form">
+<input type="url" id="url" placeholder="원본 URL" required />
+<input type="text" id="tags" placeholder="태그 (공백으로 구분)" required />
+<button type="submit">생성</button>
+</form>
+<div id="result"></div>
+</main>
+<script>
+const form = document.getElementById('form');
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const url = document.getElementById('url').value.trim();
+  const tags = document.getElementById('tags').value.split(/\s+/).filter(Boolean);
+  const res = await fetch('/api/shorten', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, tags })
+  });
+  const data = await res.json();
+  const result = document.getElementById('result');
+  if (res.ok) {
+    const a = document.createElement('a');
+    a.href = data.shortUrl;
+    a.textContent = data.shortUrl;
+    result.innerHTML = '';
+    result.appendChild(a);
+  } else {
+    result.textContent = data.error || 'Error';
+  }
+});
+</script>
+</body>
+</html>
