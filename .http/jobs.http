@@ -1,0 +1,29 @@
+### Create text job
+POST http://localhost:4000/api/jobs/text
+Content-Type: application/json
+x-user-id: demo-user
+
+{
+  "prompt": "블로그 내용을 요약해 주세요.",
+  "params": {
+    "tone": "friendly"
+  }
+}
+
+### Create image job
+POST http://localhost:4000/api/jobs/image
+Content-Type: application/json
+x-user-id: demo-user
+
+{
+  "prompt": "대담한 타이포그래피의 YouTube 썸네일",
+  "params": {
+    "size": "1024x1024"
+  }
+}
+
+### Get job
+GET http://localhost:4000/api/jobs/seed-text
+
+### Retry job
+POST http://localhost:4000/api/jobs/seed-text/retry

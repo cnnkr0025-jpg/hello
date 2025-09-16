@@ -1,0 +1,30 @@
+{
+  "name": "@ai/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/worker.ts",
+    "start": "node dist/worker.js",
+    "build": "tsc",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "format": "prettier --check ."
+  },
+  "dependencies": {
+    "@ai/core": "workspace:^",
+    "@ai/providers": "workspace:^",
+    "@prisma/client": "^5.15.0",
+    "bullmq": "^5.5.4",
+    "ioredis": "^5.4.1",
+    "pino": "^9.0.0",
+    "prisma": "^5.15.0",
+    "tsx": "^4.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5",
+    "vitest": "^1.5.0"
+  }
+}
