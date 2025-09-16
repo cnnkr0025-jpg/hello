@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8.15.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+      - name: Lint
+        run: pnpm lint
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Package artifact
+        run: |
+          pnpm install --silent turbo --global
+          pnpm build
+          zip -r ai-studio.zip apps packages scripts .http README.md .env.example pnpm-workspace.yaml turbo.json tsconfig.base.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-studio-dist
+          path: ai-studio.zip

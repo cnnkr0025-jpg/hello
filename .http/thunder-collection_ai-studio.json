@@ -1,0 +1,45 @@
+{
+  "client": "Thunder Client",
+  "collectionName": "AI Studio",
+  "dateExported": "2024-05-01",
+  "requests": [
+    {
+      "name": "Create Text Job",
+      "url": "{{api}}/api/jobs/text",
+      "method": "POST",
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" },
+        { "name": "x-user-id", "value": "demo-user" }
+      ],
+      "body": {
+        "prompt": "로파이 음악 소개를 작성해 주세요.",
+        "params": { "tone": "casual" }
+      }
+    },
+    {
+      "name": "List Jobs",
+      "url": "{{api}}/api/jobs",
+      "method": "GET",
+      "headers": [
+        { "name": "x-user-id", "value": "demo-user" }
+      ]
+    },
+    {
+      "name": "Suno Webhook",
+      "url": "{{api}}/api/webhooks/suno",
+      "method": "POST",
+      "body": {
+        "jobId": "seed-music",
+        "status": "succeeded",
+        "resultUrls": ["https://example.com/music.mp3"],
+        "usage": { "credits": 1 }
+      }
+    }
+  ],
+  "variables": [
+    {
+      "name": "api",
+      "value": "http://localhost:4000"
+    }
+  ]
+}
