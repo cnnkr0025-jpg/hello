@@ -31,6 +31,7 @@ export default async function LocaleLayout({
           <nav className="flex gap-4 text-sm text-muted-foreground">
             <a href={`/${locale}/dashboard`}>{dictionary.dashboard}</a>
             <a href={`/${locale}/projects`}>{dictionary.projects}</a>
+            <a href={`/${locale}/inspiration`}>{dictionary.inspiration}</a>
             <a href={`/${locale}/usage`}>{dictionary.usage}</a>
           </nav>
         </header>
