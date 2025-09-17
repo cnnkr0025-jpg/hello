@@ -1,0 +1,46 @@
+{
+  "client": "Thunder Client",
+  "collections": [
+    {
+      "name": "AI Orchestrator",
+      "requests": [
+        {
+          "name": "Create Text Job",
+          "method": "POST",
+          "url": "{{API_URL}}/api/jobs/text",
+          "headers": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "type": "json",
+            "raw": {
+              "prompt": "Write a blog summary about generative music.",
+              "params": { "temperature": 0.6 },
+              "userId": "00000000-0000-0000-0000-000000000001",
+              "projectId": "00000000-0000-0000-0000-000000000002"
+            }
+          }
+        },
+        {
+          "name": "Fetch Job",
+          "method": "GET",
+          "url": "{{API_URL}}/api/jobs/:id"
+        },
+        {
+          "name": "Admin Usage",
+          "method": "GET",
+          "url": "{{API_URL}}/api/admin/usage",
+          "headers": [
+            {
+              "name": "x-admin-token",
+              "value": "{{JWT_SIGNING_KEY}}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

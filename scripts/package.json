@@ -1,0 +1,12 @@
+{
+  "name": "@ai-stack/scripts",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "dependencies": {
+    "@prisma/client": "^5.13.0",
+    "@ai-stack/core": "workspace:*",
+    "dotenv": "^16.4.5",
+    "zod": "^3.22.4"
+  }
+}

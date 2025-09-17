@@ -1,18 +1,26 @@
 {
-  "name": "hello",
+  "name": "ai-orchestrator",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "packageManager": "pnpm@8.15.5",
+  "engines": {
+    "node": "^20.0.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "express": "^4.19.2",
-    "sqlite3": "^5.1.6"
+  "scripts": {
+    "dev": "pnpm turbo run dev --parallel",
+    "build": "pnpm turbo run build",
+    "lint": "pnpm turbo run lint",
+    "test": "pnpm turbo run test",
+    "test:unit": "pnpm turbo run test --filter='@ai-stack/*'",
+    "test:e2e": "pnpm --filter @ai-stack/web test:e2e",
+    "seed": "pnpm --filter @ai-stack/api seed",
+    "db:reset": "pnpm --filter @ai-stack/api db:reset",
+    "generate": "pnpm --filter @ai-stack/api prisma generate"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "prisma": "^5.13.0",
+    "turbo": "^2.0.4",
+    "typescript": "^5.4.5"
   }
 }

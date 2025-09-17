@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Plan {
+  FREE
+  PLUS
+  PRO
+}
+
+enum JobType {
+  text
+  image
+  music
+}
+
+enum JobStatus {
+  queued
+  processing
+  completed
+  failed
+  cancelled
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  role      Role     @default(USER)
+  plan      Plan     @default(FREE)
+  quota     Json
+  jobs      Job[]
+  usages    Usage[]
+  projects  Project[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  name      String
+  teamId    String?
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  apiKeys   ApiKey[]
+  jobs      Job[]
+  usages    Usage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Job {
+  id         String    @id @default(uuid())
+  type       JobType
+  provider   String
+  prompt     String
+  params     Json
+  status     JobStatus @default(queued)
+  progress   Int       @default(0)
+  resultUrls Json
+  usage      Json
+  raw        Json?
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String
+  project    Project   @relation(fields: [projectId], references: [id])
+  projectId  String
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Usage {
+  id           String   @id @default(uuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  project      Project  @relation(fields: [projectId], references: [id])
+  projectId    String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  credits      Int
+  cost         Float
+  createdAt    DateTime @default(now())
+}
+
+model ApiKey {
+  id           String   @id @default(uuid())
+  project      Project  @relation(fields: [projectId], references: [id])
+  projectId    String
+  provider     String
+  keyAlias     String
+  encryptedKey String
+  createdAt    DateTime @default(now())
+  rotatedAt    DateTime?
+}
+
+model WebhookEvent {
+  id            String   @id @default(uuid())
+  provider      String
+  externalJobId String
+  payload       Json
+  handledAt     DateTime?
+  createdAt     DateTime @default(now())
+}

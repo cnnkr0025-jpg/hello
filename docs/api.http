@@ -1,0 +1,20 @@
+### Submit text job
+POST {{API_URL}}/api/jobs/text
+Content-Type: application/json
+
+{
+  "prompt": "Summarise today's top AI news.",
+  "params": { "temperature": 0.7 },
+  "userId": "00000000-0000-0000-0000-000000000001",
+  "projectId": "00000000-0000-0000-0000-000000000002"
+}
+
+### Get job status
+GET {{API_URL}}/api/jobs/{{jobId}}
+
+### Retry job
+POST {{API_URL}}/api/jobs/{{jobId}}/retry
+
+### Admin usage
+GET {{API_URL}}/api/admin/usage
+x-admin-token: {{JWT_SIGNING_KEY}}
