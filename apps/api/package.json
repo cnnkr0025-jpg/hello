@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@ai/core": "workspace:^",
-    "@ai/providers": "workspace:^",
     "@bullmq/plugin-telemetry": "^0.3.0",
     "@fastify/cors": "^9.0.1",
     "@fastify/rate-limit": "^9.1.0",

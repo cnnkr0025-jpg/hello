@@ -3,112 +3,329 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
+enum OAuthProvider {
+  google
+  github
+  kakao
+  naver
 }
 
-enum Plan {
-  free
-  plus
-  pro
+enum Tier {
+  FREE
+  BASIC
+  PRO
 }
 
-enum JobStatus {
-  queued
-  processing
-  succeeded
+enum Difficulty {
+  easy
+  medium
+  hard
+}
+
+enum RoomMode {
+  duel
+  triple
+}
+
+enum RoomStatus {
+  waiting
+  ongoing
+  finished
+}
+
+enum MatchStatus {
+  pending
+  active
+  completed
+  cancelled
+}
+
+enum Language {
+  python
+  cpp
+  java
+}
+
+enum Verdict {
+  pending
+  passed
   failed
+  disqualified
 }
 
-enum JobType {
-  text
-  image
-  music
+enum AppealType {
+  score
+  cheating
+  system
+  other
+}
+
+enum AppealStatus {
+  pending
+  reviewing
+  resolved
+  rejected
+}
+
+enum ParticipantRole {
+  HOST
+  PLAYER
+  SPECTATOR
+}
+
+enum ParticipantStatus {
+  invited
+  joined
+  left
+  eliminated
 }
 
 model User {
-  id        String   @id
-  email     String   @unique
-  role      Role     @default(USER)
-  plan      Plan     @default(free)
-  quota     Int      @default(0)
-  jobs      Job[]
-  usages    Usage[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String             @id @default(cuid())
+  oauthProvider  OAuthProvider
+  oauthId        String
+  email          String?
+  nickname       String             @unique
+  tier           Tier               @default(FREE)
+  elo            Int                @default(1200)
+  points         Int                @default(0)
+  strikes        Int                @default(0)
+  avatarUrl      String?
+  lastLoginAt    DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  rooms          Room[]             @relation("RoomCreator")
+  roomParticipants RoomParticipant[]
+  matchParticipants MatchParticipant[]
+  submissions    Submission[]
+  transactions   Transaction[]
+  appeals        Appeal[]
+  pasteEvents    PasteEvent[]
+  spectatorSessions SpectatorSession[]
+
+  @@unique([oauthProvider, oauthId])
 }
 
-model Project {
-  id        String   @id
-  name      String
-  teamId    String?
-  apiKeys   ApiKey[]
-  jobs      Job[]
-  usages    Usage[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Room {
+  id               String             @id @default(cuid())
+  name             String
+  hint             String?
+  mode             RoomMode
+  difficulty       Difficulty
+  maxPlayers       Int
+  isPrivate        Boolean            @default(false)
+  password         String?
+  allowSpectate    Boolean            @default(true)
+  status           RoomStatus         @default(waiting)
+  languageOptions  Language[]         @default([])
+  timeLimitMinutes Int                @default(10)
+  creatorId        String
+  creator          User               @relation("RoomCreator", fields: [creatorId], references: [id])
+  participants     RoomParticipant[]
+  matches          Match[]
+  spectatorSessions SpectatorSession[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([status, difficulty])
+  @@index([allowSpectate])
 }
 
-model Job {
+model RoomParticipant {
+  id         String             @id @default(cuid())
+  roomId     String
+  userId     String
+  role       ParticipantRole    @default(PLAYER)
+  status     ParticipantStatus  @default(joined)
+  isReady    Boolean            @default(false)
+  joinedAt   DateTime           @default(now())
+  leftAt     DateTime?
+  room       Room               @relation(fields: [roomId], references: [id])
+  user       User               @relation(fields: [userId], references: [id])
+  matchParticipants MatchParticipant[]
+
+  @@unique([roomId, userId])
+  @@index([userId])
+}
+
+model Match {
+  id               String            @id @default(cuid())
+  roomId           String
+  problemId        String?
+  mode             RoomMode
+  difficulty       Difficulty
+  language         Language
+  allowSpectate    Boolean           @default(true)
+  status           MatchStatus       @default(pending)
+  startedAt        DateTime?
+  endedAt          DateTime?
+  timeLimitMinutes Int
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  room             Room              @relation(fields: [roomId], references: [id])
+  problem          Problem?          @relation(fields: [problemId], references: [id])
+  participants     MatchParticipant[]
+  submissions      Submission[]
+  judgment         Judgment?
+  appeals          Appeal[]
+  pasteEvents      PasteEvent[]
+
+  @@index([roomId])
+  @@index([status])
+}
+
+model Problem {
+  id             String      @id @default(cuid())
+  title          String
+  prompt         String
+  ioSpec         String
+  tags           String[]    @default([])
+  difficulty     Difficulty
+  publicTestcases Json
+  hiddenTestcases Json
+  version        Int         @default(1)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  matches        Match[]
+}
+
+model MatchParticipant {
+  id                 String        @id @default(cuid())
+  matchId            String
+  userId             String
+  roomParticipantId  String?
+  placement          Int?
+  eloBefore          Int
+  eloAfter           Int?
+  pointsAwarded      Int           @default(0)
+  result             Verdict?
+  createdAt          DateTime      @default(now())
+  match              Match         @relation(fields: [matchId], references: [id])
+  user               User          @relation(fields: [userId], references: [id])
+  roomParticipant    RoomParticipant? @relation(fields: [roomParticipantId], references: [id])
+  submissions        Submission[]
+
+  @@unique([matchId, userId])
+  @@index([userId])
+}
+
+model Submission {
+  id                 String        @id @default(cuid())
+  matchId            String
+  userId             String
+  matchParticipantId String?
+  lang               Language
+  code               String
+  verdict            Verdict       @default(pending)
+  execStats          Json?
+  similarity         Float?
+  aiUseScore         Float?
+  plagiarismScore    Float?
+  isPublic           Boolean       @default(false)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  match              Match         @relation(fields: [matchId], references: [id])
+  user               User          @relation(fields: [userId], references: [id])
+  matchParticipant   MatchParticipant? @relation(fields: [matchParticipantId], references: [id])
+  keystrokeLog       KeystrokeLog?
+  pasteEvents        PasteEvent[]
+
+  @@index([matchId])
+  @@index([userId])
+}
+
+model Judgment {
+  id               String     @id @default(cuid())
+  matchId          String     @unique
+  summary          String
+  explainMd        String
+  scoreCorrectness Int
+  scorePerf        Int
+  scoreQuality     Int
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  match            Match      @relation(fields: [matchId], references: [id])
+}
+
+model Transaction {
   id          String   @id @default(cuid())
-  type        JobType
-  provider    String
-  prompt      String
-  params      Json
-  status      JobStatus @default(queued)
-  progress    Int       @default(0)
-  resultUrls  Json      @default("[]")
-  usage       Json      @default("{}")
-  raw         Json      @default("{}")
   userId      String
-  projectId   String
-  user        User      @relation(fields: [userId], references: [id])
-  project     Project   @relation(fields: [projectId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  deltaPoints Int
+  reason      String
+  refId       String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
+
   @@index([userId])
-  @@index([projectId])
 }
 
-model Usage {
-  id           String   @id @default(cuid())
-  userId       String
-  projectId    String
-  model        String
-  inputTokens  Int?
-  outputTokens Int?
-  credits      Int?
-  cost         Float?
-  createdAt    DateTime @default(now())
-  user         User     @relation(fields: [userId], references: [id])
-  project      Project  @relation(fields: [projectId], references: [id])
+model Appeal {
+  id             String        @id @default(cuid())
+  userId         String
+  matchId        String
+  type           AppealType
+  text           String
+  status         AppealStatus @default(pending)
+  resolutionNote String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id])
+  match          Match        @relation(fields: [matchId], references: [id])
+
+  @@index([status])
+  @@index([matchId])
+}
+
+model KeystrokeLog {
+  id           String     @id @default(cuid())
+  submissionId String     @unique
+  timeline     Json
+  createdAt    DateTime   @default(now())
+  submission   Submission @relation(fields: [submissionId], references: [id])
+}
+
+model PasteEvent {
+  id            String     @id @default(cuid())
+  submissionId  String?
+  matchId       String?
+  userId        String?
+  byteSize      Int
+  blocked       Boolean    @default(false)
+  gptZeroScore  Float?
+  detectedAt    DateTime   @default(now())
+  source        String?
+  submission    Submission? @relation(fields: [submissionId], references: [id])
+  match         Match?      @relation(fields: [matchId], references: [id])
+  user          User?       @relation(fields: [userId], references: [id])
+
+  @@index([matchId])
   @@index([userId])
-  @@index([projectId])
 }
 
-model ApiKey {
-  id           String   @id @default(cuid())
-  projectId    String
-  provider     String
-  keyAlias     String
-  encryptedKey String
-  createdAt    DateTime @default(now())
-  rotatedAt    DateTime?
-  project      Project  @relation(fields: [projectId], references: [id])
-  @@unique([keyAlias, projectId], name: "keyAlias_projectId")
+model SpectatorSession {
+  id        String   @id @default(cuid())
+  roomId    String
+  userId    String
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  room      Room     @relation(fields: [roomId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([roomId])
+  @@index([userId])
 }
 
-model WebhookEvent {
-  id            String   @id @default(cuid())
-  provider      String
-  externalJobId String
-  payload       Json
-  handledAt     DateTime?
-  createdAt     DateTime @default(now())
+model PlanFeatureToggle {
+  id        String @id @default(cuid())
+  tier      Tier
+  feature   String
+  enabled   Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([tier, feature])
 }

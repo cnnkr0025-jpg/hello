@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@ai/core": "workspace:^",
-    "@ai/providers": "workspace:^",
     "@prisma/client": "^5.15.0",
     "bullmq": "^5.5.4",
     "ioredis": "^5.4.1",
