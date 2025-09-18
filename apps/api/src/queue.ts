@@ -1,29 +1,33 @@
 import { Queue, QueueScheduler } from "bullmq";
-import { env } from "@ai/core";
 import IORedis from "ioredis";
+import { env } from "@ai/core";
+
+export type JudgeJobPayload = {
+  submissionId: string;
+  matchId: string;
+  userId: string;
+};
 
 const connection = new IORedis(env.REDIS_URL);
 
-export const jobQueue = new Queue("generation-jobs", {
+export const judgeQueue = new Queue<JudgeJobPayload>("judge-submissions", {
   connection,
   defaultJobOptions: {
     attempts: 3,
     backoff: {
       type: "exponential",
-      delay: 3000,
+      delay: 2000,
     },
     removeOnComplete: true,
     removeOnFail: false,
   },
 });
 
-export const deadLetterQueue = new Queue("generation-jobs-dead", { connection });
+export const deadLetterQueue = new Queue("judge-submissions-dead", { connection });
 
-new QueueScheduler("generation-jobs", { connection }).waitUntilReady();
+new QueueScheduler("judge-submissions", { connection }).waitUntilReady();
 
-export async function enqueueJob(payload: Record<string, any>) {
-  const job = await jobQueue.add("generate", payload, {
-    jobId: payload.id,
-  });
+export async function enqueueJudgeJob(payload: JudgeJobPayload) {
+  const job = await judgeQueue.add("judge", payload, { jobId: payload.submissionId });
   return job.id;
 }

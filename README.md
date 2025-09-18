@@ -1,325 +1,154 @@
-# AI Creative Studio Monorepo
+# AI 코드 대결 플랫폼 Monorepo
 
-AI Creative Studio is a production-ready monorepo that showcases an end-to-end workflow for generating text, images, and music using OpenAI and Suno. It features a Next.js 14 dashboard, a Fastify REST API with automatic OpenAPI docs, BullMQ queue workers, PostgreSQL/Prisma data layer, Redis rate limiting, and full CI automation.
+본 레포지토리는 "AI 코드 대결 플랫폼"의 MVP를 2주 안에 구현하기 위한 풀스택 모노레포입니다. 방 생성 → 참가 → AI 출제 → 제한시간 내 풀이 → 샌드박스 채점 → AI 리포트 → ELO/포인트 반영 → 코드 공개 여부 선택 → 이의신청까지 이어지는 핵심 루프를 지원하며, 모든 정책·요구사항을 빠짐없이 반영합니다.
 
-## Repository Layout
+## 서비스 개요
 
-```
-.
-├── apps
-│   ├── api       # Fastify REST API + OpenAPI docs + Prisma migrations
-│   ├── web       # Next.js 14 App Router frontend with Tailwind & shadcn/ui
-│   └── worker    # BullMQ worker that executes model jobs asynchronously
-├── packages
-│   ├── core      # Shared env config, RBAC, crypto helpers
-│   ├── providers # Provider adapters for OpenAI & Suno (Strategy pattern)
-│   └── ui        # Shared UI primitives (shadcn/ui powered)
-├── prisma        # Managed inside apps/api/prisma
-├── scripts       # Cross-platform Node helpers (dev, build, seed, etc.)
-├── .http         # Thunder Client / REST client samples
-└── .github       # GitHub Actions CI workflow
-```
+- **가칭**: AI 코드 대결 플랫폼
+- **모드**: 1v1 / 1v1v1 (지원 인원 2/3/4)
+- **사용 언어(초기)**: Python, C++, Java
+- **보상**: 포인트 → 기프티콘 등으로 교환 (현금 환전 불가)
+- **핵심 루프**: 방 생성(난이도/모드 설정) → 참가(SSO) → AI 출제 → 제한시간 내 풀이 → 샌드박스 채점 → GPT-5 심판 리포트(장단점/판정) → ELO/포인트 반영 → 코드 공개 여부 선택 → (필요 시) 이의신청
+- **관전 옵션**: 방 생성 시 👀 관전 허용 체크박스, 방 목록 필터/아이콘, 대결 중 코드 비공개, 종료 후 참가자 "공개하기" 선택 시 열람 가능
 
-## Key Features
+## 사용자 플로우
 
-- **Frontend**: Next.js 14 App Router, Tailwind, shadcn/ui, lucide-react, SWR + SSE job watcher, preset-driven workflow builder, quota warnings, i18n (ko/en), usage & billing dashboard, project/key management, policy acknowledgement banner, and error handling for banned prompts & quota limits.
-- **Backend**: Fastify REST API, Redis-backed rate limiting (per-user/IP & per-model tiers), BullMQ queue orchestration, Prisma ORM, encrypted API keys, webhook receivers (Suno + Toss/Stripe), SSE streams for job updates, OpenTelemetry + Pino logging, automatic OpenAPI docs (`/api/docs`), admin endpoints with RBAC, dead-letter queue with notifications.
-- **Worker**: BullMQ worker with retry/backoff, dead-letter queue publishing, OpenAI/Suno provider dispatch, usage tracking, and Prisma updates.
-- **Providers**: Strategy pattern adapters for OpenAI GPT-5 chat & gpt-image-1, Suno v4 tracks (polling + webhook), mock toggles for offline/test usage.
-- **Security**: Strict Zod validation, encrypted secrets (AES-256-GCM), key rotation script, quota enforcement, banned-word detection, JWT-based NextAuth with Prisma adapter, RBAC helper utilities.
-- **Payments**: Toss & Stripe webhook stubs, plan/quota definitions (Free/Plus/Pro), usage reporting, upgrade prompts.
-- **Observability**: Pino structured logging, optional OTLP exporter, Sentry DSN placeholder, CI artifact packaging.
-- **DX**: pnpm + turbo monorepo, `pnpm dev` one-command multi-app dev, seed script creating admin/demo data, Thunder Client & .http samples, Playwright + Vitest tests, GitHub Actions pipeline shipping ready-to-deploy ZIP.
+1. **메인 화면**: 히어로 문구 + CTA 버튼(프라이머리 "대결하기", 세컨더리 "관전하기")
+2. **로그인/회원가입**: SNS 로그인(Google, GitHub, Kakao, Naver)만 허용
+3. **방 목록**: 난이도 아이콘(Easy=🟢, Hard=🔴), 인원 {현재/제한}, 정렬/필터(난이도/인원/최신/관전 가능), 상태 배지(대기/진행/마감), 관전 여부
+4. **방 생성**:
+   - 필수: 방 이름(힌트 포함), 최대 인원 드롭다운(2/3/4), 난이도 라디오(E/M/H)
+   - 옵션: 비공개(비번), 언어 선택(Py/C++/Java), 타임리밋(10/20/30분), 관전 허용 체크박스
+   - 버튼: “생성” 강조, “취소” 보조
+5. **대결 화면**: Monaco 에디터, 타이머, 붙여넣기 제어, 제출 → 샌드박스 채점 → GPT-5 심판
+6. **결과 화면**: AI 해설 리포트, 승패/ELO/포인트 반영, 코드 공개 여부 선택, 이의신청 버튼
+7. **마이페이지**: 최근 대결 기록, 승/패, ELO 변화, 포인트 잔액/교환, 구독/멤버십 관리
 
-## Prerequisites
+## 핵심 기능
 
-- **Windows 10/11** (WSL not required). Use PowerShell 7+ or Git Bash.
-- **Node.js 20** and **pnpm 8.15+** (`corepack enable` recommended).
-- **PostgreSQL 14+** *(or SQLite for quick local demo)*.
-- **Redis 7+** (Upstash-compatible).
-- Optional: **Docker Desktop** (for quick Postgres/Redis), **Stripe CLI**, **Toss Payments test account**, **Cloudflare R2/S3-compatible storage**.
+- **AI 출제**: 난이도별 문제 생성, 히든 테스트케이스 포함, 그래프/DP 등 특수 문제(Pro 전용)
+- **AI 검증기**: 문제 오류 검증 및 자동 재생성
+- **AI 심판**: 샌드박스 채점 + 코드 품질/효율 평가 → 장단점 설명, 승패 판정
+- **ELO & 포인트 이원화**: 실력(ELO)과 보상(포인트) 분리 관리
+- **이의신청 시스템**: 운영자가 제출 로그/패턴/샌드박스 결과 확인 가능, SLA 내 응답
 
-## Environment Variables
+## 공정성 & 보안 정책
 
-Copy `.env.example` to `.env` at the repository root and adjust values:
+- 모든 제출 로그 + 키 입력 패턴 기록(항상 저장)
+- AI 사용 탐지: 대용량 붙여넣기 발생 시 GPTZero 탐지 호출
+- 붙여넣기 제어: 대용량 paste 차단·경고, 문제 복사 방지 시도 로깅
+- 표절 방지: AST/토큰 분포/과거 제출물 대조
+- 샌드박스: Docker/Firecracker 격리, 네트워크 차단, 리소스 제한
+- 부정 적발 시 영구정지, 이의신청 경로 제공
 
-```powershell
-Copy-Item .env.example .env
-```
+## 요금제
 
-Key variables:
-
-| Variable | Description |
-| --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string or `file:./dev.db` for SQLite. |
-| `REDIS_URL` | Redis/Upstash connection string. |
-| `OPENAI_API_KEY` / `SUNO_API_KEY` | API keys (set `MOCK_OPENAI=true`, `MOCK_SUNO=true` for sandboxing). |
-| `NEXTAUTH_SECRET` | Random string for NextAuth JWT encryption. |
-| `NEXTAUTH_URL` | Base URL of the web app (e.g., `http://localhost:3000`). |
-| `FRONTEND_URL` / `API_URL` / `NEXT_PUBLIC_API_URL` | Internal and public URLs for web/API. |
-| `TOSS_*`, `STRIPE_*` | Payment gateway credentials + webhook secrets. |
-| `S3_*` | Cloudflare R2 or S3 compatible storage credentials for signed URL uploads. |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | Optional OTLP collector URL for OpenTelemetry traces. |
-| `ENCRYPTION_KEY` | 32+ char key for AES-256-GCM encryption at rest. |
-
-### Switching to SQLite
-
-Set:
-
-```env
-DATABASE_URL="file:./dev.db"
-```
-
-Then run:
-
-```powershell
-pnpm --filter @ai/api prisma db push --schema apps/api/prisma/sqlite.schema.prisma
-```
-
-The generated client works for SQLite and can be swapped back to PostgreSQL without code changes.
-
-## Installation
-
-```powershell
-pnpm install
-```
-
-This command generates `pnpm-lock.yaml` and installs dependencies for all workspaces.
-
-## Development Workflow
-
-1. **Start services (Windows)**
-   - PostgreSQL: use Docker Desktop or install locally. Example with Docker:
-     ```powershell
-     docker run --name ai-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -d postgres:15
-     ```
-   - Redis: Upstash cloud or Docker:
-     ```powershell
-     docker run --name ai-redis -p 6379:6379 -d redis:7
-     ```
-
-2. **Run migrations & seed**
-   ```powershell
-   pnpm db:push          # Prisma schema sync
-   pnpm seed             # scripts/seed.mjs -> creates admin/demo data
-   ```
-
-3. **Launch all apps**
-   ```powershell
-   pnpm dev
-   ```
-   - Web: http://localhost:3000 (Next.js with live reload)
-   - API: http://localhost:4000 (Fastify REST API + Swagger UI at `/api/docs`)
-   - Worker: BullMQ processor (auto-started via Turbo pipeline)
-
-4. **Key rotation**
-   ```powershell
-   pnpm key:rotate       # rotates API keys with AES-256-GCM
-   ```
-
-5. **Reset database**
-   ```powershell
-   pnpm db:reset
-   pnpm seed
-   ```
-
-### Scripts Summary
-
-| Command | Description |
-| --- | --- |
-| `pnpm dev` | Turbo-run dev servers for web/api/worker with shared logs. |
-| `pnpm build` | Production builds for all apps (Next.js build, tsc, etc.). |
-| `pnpm lint` | Type-checking via `tsc --noEmit`. |
-| `pnpm test` | Runs Vitest unit tests + Playwright E2E (Chromium). |
-| `pnpm seed` | Executes Prisma seed (admin/demo data, API keys, jobs). |
-| `pnpm key:rotate` | Rotates encrypted API keys. |
-| `pnpm ci` | Shortcut for lint → test → build (mirrors GitHub Actions). |
-| `pnpm --filter @ai/web test` | Run Playwright tests only (requires `npx playwright install`). |
-
-## Frontend Highlights
-
-- Dashboard with preset workflow builder (`프롬프트 → 모델 → 파라미터 → 제출`), SSE job monitor, quota warnings, banned word feedback, share/retry buttons.
-- Project management page listing API keys with rotation timestamps and preset sharing guidance.
-- Usage & billing page visualizing plan allocations (daily/monthly) with progress bars and upgrade CTA.
-- Job detail view with audio player, image previews, text results, SSE-powered status widget, usage breakdown, and error fallback messaging.
-- Built-in presets (6 total):
-  - Text: *YouTube Script Draft (Korean)*, *Product Description SEO*
-  - Image: *YouTube Thumbnail – Bold Typography*, *Logo Variations – Minimal*
-  - Music: *Lo-fi Chill 90BPM*, *Ambient Drone 50–70 BPM*
-- Policy banner requiring acknowledgement of Suno/OpenAI TOS & copyright responsibility.
-- i18n dictionaries for Korean/English (extend in `apps/web/lib/i18n.ts`).
-
-## Backend API
-
-Base URL: `http://localhost:4000`
-
-| Method | Endpoint | Description |
+| 플랜 | 가격 | 주요 기능 |
 | --- | --- | --- |
-| `POST` | `/api/jobs/text` | Queue a GPT-5 text job (quota + banned word checks). |
-| `POST` | `/api/jobs/image` | Queue a gpt-image-1 image job. |
-| `POST` | `/api/jobs/music` | Queue a Suno music track generation. |
-| `GET` | `/api/jobs/:id` | Retrieve job status, usage, results. |
-| `POST` | `/api/jobs/:id/retry` | Requeue a failed/completed job. |
-| `GET` | `/api/jobs/:id/stream` | Server-Sent Events stream for live status. |
-| `GET` | `/api/jobs` | List recent jobs for the authenticated user. |
-| `POST` | `/api/webhooks/suno` | Suno completion webhook (updates job, logs event). |
-| `POST` | `/api/webhooks/payments` | Toss/Stripe webhook listener. |
-| `GET` | `/api/admin/users` | Admin-only user list. |
-| `GET` | `/api/admin/usage` | Aggregated usage records. |
-| `GET` | `/api/admin/providers` | Provider registry + stored API keys.
+| Free | 무료 | 대결·관전 체험, 일일 대결 횟수 제한(수치 미정) |
+| Basic | 월 4,900원 | “심화 리뷰 요청” 기능: 대결 종료 후 GPT가 시간복잡도/최적화 아이디어 제공, 대결 횟수 상향, 광고 제거 옵션 |
+| Pro | 월 9,900원 | 특수 문제 출제(그래프/DP 등), AI 해설 심화(대안 알고리즘 + 맞춤 후속 문제 추천), 방 생성 한도 하루 1,000개(사실상 무제한), Basic 기능 포함 |
 
-OpenAPI documentation is served at **`/api/docs`** via Scalar UI. Use the bundled Thunder Client collection or `.http/jobs.http` for quick testing.
+## UI/UX 가이드
 
-### Rate Limiting
+- **메인**: CTA 강조(“대결하기”=Primary, “관전하기”=Secondary), sticky header, 모바일 햄버거 메뉴 + 하단 고정 CTA
+- **마이페이지**: 로그인 후 프로필 아이콘 드롭다운, 사이드바 그룹(계정 관리/구독·멤버십/기타), 인사말, 최근 대결 기록(승/패/ELO 변화), 포인트 잔액/교환 버튼
+- **방 목록**: 난이도 색상/아이콘(Easy=🟢, Hard=🔴), 인원 {현재}/{제한}, 정렬/필터(난이도/인원 수/최신순/관전 가능만), 상태 배지(대기/진행/마감), 모바일 카드뷰
+- **방 생성**: 필수/옵션 필드 및 버튼 레이아웃 명시, 관전 허용 체크박스
+- **대결 UI**: Monaco 에디터, 타이머, 붙여넣기 제어, 제출 플로우, 결과 페이지의 코드 공개/이의신청 구성
 
-- Global Redis limiter keyed by `IP:userId`.
-- Per-model throttling (`text` max 20/min, `image` max 10/min, `music` max 6/min).
-- Responses return descriptive JSON errors (`Quota exceeded`, `Prompt contains restricted language`).
+## 데이터 모델
 
-### Queue & Worker
+Prisma schema는 다음 엔터티를 포함합니다.
 
-- Jobs saved to Prisma with `queued` status, then enqueued to `generation-jobs` (BullMQ).
-- Worker updates status to `processing`, dispatches provider adapters, saves usage + raw payload.
-- Dead-letter queue `generation-jobs-dead` receives failures for admin review.
-- Webhooks from Suno/Toss/Stripe recorded in `WebhookEvent` table.
-- SSE endpoint polls Prisma every 3 seconds until job resolves.
+- `users(id, oauth_provider, nickname, tier, elo, points, strikes, created_at, updated_at)`
+- `rooms(id, mode, difficulty, is_private, password?, allow_spectate, max_players, status, creator_id, created_at)`
+- `matches(id, room_id, mode, difficulty, started_at, ended_at, time_limit_minutes, allow_spectate)`
+- `problems(id, prompt, io_spec, tags, difficulty, testcases_blob, version)`
+- `submissions(id, match_id, user_id, lang, code, verdict, exec_stats, similarity, ai_use_score, created_at)`
+- `judgments(id, match_id, summary, explain_md, score_correctness, score_perf, score_quality, created_at)`
+- `transactions(id, user_id, delta_points, reason, ref_id, created_at)`
+- `appeals(id, user_id, match_id, type, text, status, resolution_note, created_at)`
+- `keystroke_logs(id, submission_id, timeline_blob, created_at)`
+- 추가로 `room_participants`, `match_participants`, `spectator_sessions`, `paste_events` 등 플랫폼 운용을 위한 관계형 테이블을 제공합니다.
 
-### Provider Abstraction
+## 기술 스택
 
-`packages/providers` implements the strategy pattern:
+- **프론트엔드**: Next.js(App Router) + Tailwind CSS + shadcn/ui + React Query + Monaco Editor
+- **백엔드**: Node.js(Fastify 기반) + Prisma + PostgreSQL + Redis + WebSocket
+- **채점 서버**: Docker/Firecracker 기반 샌드박스, BullMQ 큐
+- **스토리지/로그**: S3 호환 스토리지 + OpenSearch(제출 로그/관전 기록 색인)
+- **인증**: OAuth(Google, GitHub, Kakao, Naver)
+- **배포**: Vercel(프론트), Fly.io/EC2/Cloud Run(백엔드 및 샌드박스/워커)
 
-```ts
-interface ProviderAdapter {
-  name: string;
-  taskType: "text" | "image" | "music";
-  createJob(input: CommonInput): Promise<CommonJob>;
-  getJob(id: string): Promise<CommonJob>;
-}
+## 비용 구조 & 손익 분석
+
+- **GPT-5**: 약 $0.00825 / 대결
+- **Docker 인프라**: 월 $10~30 (규모↑ 시 $100~300)
+- **GPTZero**: 대용량 붙여넣기 시만 호출, 월 $0~45 (최대 $135)
+
+| 유저 수 | 총 대결 | 최선 비용 | 최악 비용 | 수익(1인 $1) | 최선 손익 | 최악 손익 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 10 | 100 | $10.83 | $76.65 | $10 | −$0.83 | −$66.65 |
+| 50 | 500 | $14.13 | $83.25 | $50 | +$35.87 | −$33.25 |
+| 100 | 1,000 | $18.25 | $91.5 | $100 | +$81.75 | +$8.5 |
+| 10,000 | 100,000 | $925 | $2,085 | $10,000 | +$9,075 | +$7,915 |
+
+👉 **결론**: 100명 이상부터 안정적 흑자, 대규모일수록 고마진 구조.
+
+## 정책 & 법적 고려
+
+- 미성년자 보호: 환전 불가, 기프티콘 등으로 한정 / 월 교환 상한 필요
+- 개인정보 처리: 제출 로그·키 입력 패턴 저장 고지 + 동의 필수
+- 이의신청 처리 SLA: X일 이내 1차 답변(추후 확정)
+- 부정행위 정의 및 제재 수위 명문화, 영구 정지 포함
+
+## MVP 로드맵 (2주)
+
+- **D1~2**: DB 스키마, API, 소켓 설계, SSO 연동
+- **D3~5**: 방 생성/참가/목록(정렬·필터·관전)
+- **D6~7**: 샌드박스 채점, 히든 케이스 검증
+- **D8~9**: AI 리포트 1차, ELO/포인트 반영, 코드 공개하기
+- **D10**: 이의신청, 로그 열람
+- **D11~12**: 요금제 가드(Basic/Pro), Pro 특수문제, Basic 심화 리뷰
+- **D13~14**: 알파 테스트(10~50명), 버그픽스, 운영 패널 구축
+
+## 백로그
+
+- 리플레이(제출 타임라인 시각화)
+- 시즌 랭킹 / 업적 뱃지
+- 관전 채팅 / 하이라이트 공유 / 팔로우 알림
+- 연습 모드 / 커리큘럼 추천
+- 아바타·테마 상점 (비금전 보상)
+
+## 아키텍처 개요
+
+- **모노레포 구조**: `apps/web`(Next.js), `apps/api`(Fastify), `apps/worker`(BullMQ 샌드박스 워커), `packages/*`(공용 라이브러리)
+- **API 설계**: REST + WebSocket(Spectator/Timer), OAuth SSO, Prisma 기반 Repository, OpenAPI 문서 자동화
+- **큐잉**: `judge-submissions` 큐에 샌드박스 채점, GPT-5 리포트, GPTZero 탐지 작업을 파이프라인화
+- **스토리지**: 코드/로그는 S3 호환 스토리지, 검색은 OpenSearch 인덱스, 장기 보관은 Glacier 호환
+- **관전/리플레이**: SSE/WebSocket으로 실시간 상태 전달, 관전 허용 방만 구독 가능, 종료 후 참가자 동의 시 코드 공개
+- **보안**: Docker/Firecracker 기반 샌드박스, 네트워크 차단, 리소스 제한, 표절 탐지(AST, 토큰 분포, 과거 제출물 비교)
+- **요금제 가드**: Redis 기반 rate limit + 포인트/플랜 체크, Basic/Pro 한정 기능 토글, 일일 대결 횟수 제한
+
+## 배포 전략
+
+- **프론트엔드**: Vercel(Preview/Production), 환경 변수로 API URL/SSO 설정
+- **백엔드 API**: Fly.io(초기) → 트래픽 증가 시 AWS EC2 AutoScaling or Cloud Run, 로드밸런서 + HTTPS
+- **샌드박스 워커**: Firecracker 호스팅 가능한 전용 노드(Fly Machines / EC2), Docker-in-Docker 금지, 이미지 캐시 전략
+- **데이터베이스**: Managed PostgreSQL (Neon/RDS), Prisma Migrate로 버전 관리
+- **Redis**: Upstash 또는 ElastiCache, 세션/큐/레이트리밋 공유
+- **S3/로그**: Cloudflare R2 + OpenSearch 도입, Log retention 정책 1년
+- **CI/CD**: GitHub Actions → pnpm lint/test/build → Vercel Preview & Fly.io deploy
+
+## 개발 환경
+
+```bash
+pnpm install
+cp .env.example .env
+pnpm db:push   # Prisma 스키마 동기화
+pnpm seed      # 기본 유저/방/문제 시드
+pnpm dev       # web(3000) + api(4000) + worker 실행
 ```
 
-- **OpenAIAdapter** (text/image) integrates GPT-5 chat, function calling hooks, and `gpt-image-1` for generations/edits/variations.
-- **SunoAdapter** (music) submits v4 track jobs, polls status, or accepts webhook payloads; includes mocks for unsupported endpoints.
-- Toggle mocks using `MOCK_OPENAI=true` / `MOCK_SUNO=true` (default in `.env.example`).
-
-## Database Schema (Prisma)
-
-Models: `User`, `Project`, `Job`, `Usage`, `ApiKey`, `WebhookEvent`. See `apps/api/prisma/schema.prisma` for detailed relations, enums (`Role`, `Plan`, `JobType`, `JobStatus`), indexes, and unique constraints.
-
-- Encrypted API keys stored as AES-256-GCM JSON payloads.
-- Job records store prompt, params, usage, raw provider payload, progress, and result URLs.
-- Usage records log per-model token/credit consumption with timestamps for billing.
-
-Run migrations:
-
-```powershell
-pnpm --filter @ai/api prisma:generate
-pnpm --filter @ai/api prisma:migrate
-```
-
-## Testing
-
-- **Vitest** unit tests for provider registry (`packages/providers/tests/registry.test.ts`) and API job service (`apps/api/src/services/job-service.test.ts`) with mocked adapters/Prisma.
-- **Playwright** E2E (`apps/web/tests/e2e.spec.ts`) covering login page render, dashboard presets, and submission UX. Install browsers once via `npx playwright install` (CI caches).
-
-Execute full test suite:
-
-```powershell
-pnpm test
-```
-
-## CI/CD & Packaging
-
-GitHub Actions (`.github/workflows/ci.yml`) performs lint → test → build → ZIP packaging. The workflow uploads `ai-studio.zip` containing `/apps`, `/packages`, `/scripts`, `.http`, README, and configuration files. The ZIP is ready for direct deployment or sharing.
-
-## Deployment Guides
-
-### Frontend (Vercel)
-
-1. Import the repo into Vercel.
-2. Set environment variables (use `.env.example`).
-3. Configure build command `pnpm --filter @ai/web build` and output `.next`.
-4. Enable Edge runtime if using Suno webhooks (optional).
-5. Point custom domain and configure NextAuth `NEXTAUTH_URL` accordingly.
-
-### Backend API (Render / Fly.io)
-
-- **Render**: Deploy a Node service pointing to `apps/api`, build command `pnpm --filter @ai/api build`, start command `node apps/api/dist/server.js`. Provision Redis (Upstash) and Postgres (Render/Neon). Add environment variables.
-- **Fly.io**: Use `fly launch` with Dockerfile referencing `apps/api`. Scale to multiple regions with Redis hosted on Upstash. Ensure `PORT` env set to `8080` (Fly default) and pass to Fastify.
-
-### Worker (Render background job / Fly.io worker)
-
-Deploy as a separate service using `pnpm --filter @ai/worker build` and start `node apps/worker/dist/worker.js`. Shares the same `.env` (Redis, Postgres, provider keys).
-
-### Managed Services
-
-- **Redis**: Upstash free tier works out-of-the-box (set `REDIS_URL`).
-- **Postgres**: Neon or Supabase recommended. Update `DATABASE_URL` / `DIRECT_URL`.
-- **Storage**: Cloudflare R2, AWS S3, or MinIO. Use `S3_*` env values and refer to README section “File uploads” below.
-- **Telemetry**: Point `OTEL_EXPORTER_OTLP_ENDPOINT` to Honeycomb/Tempo collector. Otherwise console spans are emitted.
-- **Sentry**: Set `SENTRY_DSN` and wrap Fastify/Next with the official SDK (hooks ready via env).
-
-## File Uploads & Signed URLs
-
-While generation results currently store external URLs, you can push to S3/R2 using the following pattern:
-
-1. Configure `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`.
-2. Generate presigned PUT URLs in the API (Fastify route) using AWS SDK v3.
-3. Upload generated assets from the worker, then store the signed GET URL in `Job.resultUrls`.
-4. README includes Cloudflare R2 configuration references.
-
-## Payments & Billing
-
-- Plans defined in `packages/core/src/config/plans.ts` (Free/Plus/Pro) with daily/monthly credit limits.
-- Toss & Stripe webhooks handled at `/api/webhooks/payments`. Extend to validate signatures and update `Usage`/`User.plan` fields.
-- Frontend usage page nudges upgrade when daily/monthly bars exceed thresholds.
-- Quota enforcement placeholder: `User.quota` decreases on each job; `Quota exceeded` error triggers UI alert.
-
-## Key Rotation
-
-Run `pnpm key:rotate` to re-encrypt API keys with a fresh secret (AES-256-GCM). The script stamps `rotatedAt` for auditing. Documented in README and seed data includes sample keys.
-
-## Mock & Testing Modes
-
-- Set `MOCK_OPENAI=true` / `MOCK_SUNO=true` to bypass network calls and use deterministic placeholder data.
-- `pnpm test` runs with mocks automatically (see Vitest setup). Useful for offline Windows development.
-
-## Troubleshooting
-
-| Issue | Resolution |
-| --- | --- |
-| Fastify fails to start | Ensure `DATABASE_URL`, `REDIS_URL`, and `OPENAI_API_KEY` are set. Prisma throws descriptive errors. |
-| Quota exceeded instantly | Run `pnpm seed` to reset quotas (`User.quota = 50000` for admin). |
-| Playwright missing browsers | Run `npx playwright install` once on Windows. |
-| Worker can’t connect to Redis | Check firewall or Upstash TLS (use `rediss://` URLs). |
-| Suno webhook 400 | Ensure payload matches `sunoSchema` (jobId, status, resultUrls). |
-
-## Deployment Checklist
-
-- [ ] Configure Vercel environment variables (`NEXT_PUBLIC_API_URL`, `NEXTAUTH_URL`, OAuth secrets).
-- [ ] Deploy API & worker (Render/Fly) with shared `.env`.
-- [ ] Provision Redis (Upstash) and Postgres (Neon/Render) and update connection strings.
-- [ ] Configure Toss & Stripe webhook endpoints pointing to `/api/webhooks/payments`.
-- [ ] Set Cloudflare R2/S3 credentials if storing generated assets.
-- [ ] Rotate secrets regularly using `pnpm key:rotate` and update `.env`.
-- [ ] Enable OTLP exporter for production tracing, Sentry DSN for error monitoring.
-
-## Packaging as ZIP
-
-Running the CI workflow or the manual command below produces a deployable ZIP (`ai-studio.zip`) that contains all apps, packages, scripts, and environment templates:
-
-```powershell
-pnpm build
-zip -r ai-studio.zip apps packages scripts .http README.md .env.example pnpm-workspace.yaml turbo.json tsconfig.base.json
-```
-
-The ZIP unpacks to a ready-to-run monorepo on Windows 10/11 with the same structure documented above.
-
-## Additional Resources
-
-- Thunder Client collection: `.http/thunder-collection_ai-studio.json`
-- REST client snippets: `.http/jobs.http`
-- Seed data: `apps/api/prisma/seed.ts`
-- Key rotation: `apps/api/prisma/key-rotate.ts`
-- Database reset: `apps/api/prisma/reset.ts`
-
-Happy building! 🎨🎵🤖
+자세한 라우팅, UI 와이어프레임, 배포 플레이북은 `docs/` 디렉터리를 참고하세요.

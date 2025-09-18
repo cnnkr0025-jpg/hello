@@ -7,9 +7,11 @@ import swagger from "@fastify/swagger";
 import swaggerUI from "@fastify/swagger-ui";
 import fastifySSE from "fastify-sse-v2";
 import { env } from "@ai/core";
-import { jobRoutes } from "./routes/jobs";
+import { roomRoutes } from "./routes/rooms";
+import { matchRoutes } from "./routes/matches";
+import { userRoutes } from "./routes/users";
+import { appealRoutes } from "./routes/appeals";
 import { adminRoutes } from "./routes/admin";
-import { webhookRoutes } from "./routes/webhooks";
 import { prisma } from "./db";
 import { startTelemetry, shutdownTelemetry } from "./telemetry";
 
@@ -27,17 +29,19 @@ export async function buildServer() {
   });
   await server.register(rateLimit, {
     global: false,
-    max: 100,
+    max: 120,
     timeWindow: "1 minute",
-    keyGenerator: (req) => `${req.ip}:${req.headers["x-user-id"] ?? "anonymous"}`,
+    keyGenerator: (req) => `${req.ip}:${req.headers["x-user-id"] ?? "guest"}`,
   });
   await server.register(sensible);
   await server.register(fastifySSE);
   await server.register(swagger, {
     openapi: {
       info: {
-        title: "AI Creative Studio API",
+        title: "AI 코드 대결 플랫폼 API",
         version: "0.1.0",
+        description:
+          "AI 코드 대결 플랫폼의 방 생성, 대결, 채점, 공정성 모니터링 API 문서입니다. SSO 헤더(x-user-id/x-user-provider)를 사용해 인증합니다.",
       },
     },
   });
@@ -46,26 +50,46 @@ export async function buildServer() {
   });
 
   server.register(async (instance) => {
-    instance.register(jobRoutes, { prefix: "/api/jobs" });
-    instance.register(webhookRoutes, { prefix: "/api/webhooks" });
+    instance.register(roomRoutes, { prefix: "/api/rooms" });
+    instance.register(matchRoutes, { prefix: "/api/matches" });
+    instance.register(userRoutes, { prefix: "/api/users" });
+    instance.register(appealRoutes, { prefix: "/api/appeals" });
     instance.register(adminRoutes, { prefix: "/api/admin" });
   });
 
   server.get("/health", async () => ({ status: "ok" }));
 
-  server.get("/api/jobs/:id/stream", async (request, reply) => {
+  server.get("/api/matches/:id/stream", async (request, reply) => {
     const { id } = request.params as { id: string };
     reply.sse({ data: JSON.stringify({ status: "listening" }) });
     const interval = setInterval(async () => {
-      const job = await prisma.job.findUnique({ where: { id } });
-      if (job) {
-        reply.sse({ data: JSON.stringify(job) });
-        if (job.status === "succeeded" || job.status === "failed") {
+      const match = await prisma.match.findUnique({
+        where: { id },
+        include: {
+          participants: { include: { user: true } },
+          submissions: {
+            where: { verdict: { not: "pending" } },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+          },
+          judgment: true,
+        },
+      });
+      if (match) {
+        reply.sse({
+          data: JSON.stringify({
+            status: match.status,
+            endedAt: match.endedAt,
+            submissions: match.submissions,
+            judgment: match.judgment,
+          }),
+        });
+        if (match.status === "completed" || match.status === "cancelled") {
           clearInterval(interval);
           reply.raw.end();
         }
       }
-    }, 3000);
+    }, 4000);
     reply.raw.on("close", () => clearInterval(interval));
   });
 

@@ -1,232 +1,231 @@
 import Link from "next/link";
-import { ArrowRight, Palette, ShieldCheck, Sparkles, Timer, Zap } from "lucide-react";
-import { defaultLocale } from "@/lib/i18n";
+import { ArrowRight, Eye, ShieldCheck, Timer, Trophy, Users } from "lucide-react";
 
-const features = [
+const pricing = [
   {
-    title: "모든 크리에이티브를 한 곳에서",
-    description: "텍스트, 이미지, 음악까지 하나의 워크플로우에서 자연스럽게 이어지는 AI 제작 환경을 제공합니다.",
-    icon: Sparkles,
+    plan: "Free",
+    price: "무료",
+    description: "대결·관전 체험, 일일 대결 횟수 제한",
+    perks: ["일일 대결 횟수 제한 (설정 가능)", "관전 모드 이용", "광고 노출"],
   },
   {
-    title: "프리셋 & 라이브러리",
-    description: "브랜드 톤에 맞춘 프롬프트와 스타일 프리셋을 저장하고 팀원들과 손쉽게 공유하세요.",
-    icon: Palette,
+    plan: "Basic",
+    price: "월 4,900원",
+    description: "심화 리뷰 요청 및 광고 제거 옵션",
+    perks: ["심화 리뷰 요청 (GPT-5)", "대결 횟수 상향", "광고 제거 옵션"],
   },
   {
-    title: "실시간 협업",
-    description: "동료와 동시에 워크플로우를 편집하고 변화 과정을 히스토리로 관리할 수 있습니다.",
-    icon: Zap,
-  },
-  {
-    title: "정책 중심의 안전한 생성",
-    description: "자동 정책 감지와 저작권 체크로 안심하고 콘텐츠를 배포하세요.",
-    icon: ShieldCheck,
-  },
-  {
-    title: "자동화된 전달",
-    description: "마케팅 채널과 연동된 전달 자동화로 결과물을 즉시 배포할 수 있습니다.",
-    icon: ArrowRight,
-  },
-  {
-    title: "성능을 위한 최적화",
-    description: "팀 사용량과 모델 성능을 대시보드에서 분석하고 최적의 비용 구조를 설계하세요.",
-    icon: Timer,
+    plan: "Pro",
+    price: "월 9,900원",
+    description: "특수 문제 출제 및 무제한 방 생성",
+    perks: ["그래프/DP 등 특수 문제", "대안 알고리즘 + 후속 문제 추천", "방 생성 한도 하루 1,000개"],
   },
 ];
 
-const milestones = [
+const fairness = [
   {
-    title: "아이디어 입력",
-    description: "간단한 설명과 목적만 입력하면, 맞춤 템플릿이 자동으로 추천됩니다.",
+    title: "샌드박스 격리",
+    description: "Docker/Firecracker 기반 실행으로 네트워크를 차단하고 리소스를 제한합니다.",
   },
   {
-    title: "워크플로우 조합",
-    description: "텍스트, 이미지, 사운드를 블록처럼 쌓아 원하는 결과물을 빠르게 설계하세요.",
+    title: "AI 사용 탐지",
+    description: "대용량 붙여넣기 발생 시 GPTZero 분석과 표절 검사(AST/토큰 분포)를 실시합니다.",
   },
   {
-    title: "검수 및 배포",
-    description: "자동 검수 레포트를 확인하고 버튼 한 번으로 원하는 채널에 배포할 수 있습니다.",
+    title: "키 입력 로그",
+    description: "모든 제출의 키 입력 패턴과 붙여넣기 이력을 저장하고 OpenSearch로 검색할 수 있습니다.",
   },
 ];
 
-const testimonials = [
-  {
-    quote:
-      "AI Creative Studio 덕분에 콘텐츠 제작 사이클이 절반 이하로 줄었습니다. 팀 간 협업이 정말 매끄러워요.",
-    name: "김하늘",
-    role: "크리에이티브 리드, Studio Nova",
-  },
-  {
-    quote: "세밀한 제어와 정책 가이드라인이 큰 도움이 됩니다. 브랜드 톤을 유지한 채로 빠르게 실험할 수 있어요.",
-    name: "Minji Park",
-    role: "콘텐츠 전략가, Tomorrow Labs",
-  },
+const roadmap = [
+  { range: "D1~2", task: "DB 스키마, API, 소켓 설계, SSO 연동" },
+  { range: "D3~5", task: "방 생성/참가/목록(정렬·필터·관전)" },
+  { range: "D6~7", task: "샌드박스 채점, 히든 케이스 검증" },
+  { range: "D8~9", task: "AI 리포트 1차, ELO/포인트 반영, 코드 공개하기" },
+  { range: "D10", task: "이의신청, 로그 열람" },
+  { range: "D11~12", task: "요금제 가드, Pro 특수문제, Basic 심화 리뷰" },
+  { range: "D13~14", task: "알파 테스트(10~50명), 버그픽스, 운영패널" },
 ];
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="relative isolate overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-900" />
-        <div className="absolute inset-x-0 top-[-25%] -z-10 flex justify-center blur-3xl">
-          <div className="h-[32rem] w-[60rem] rounded-full bg-gradient-to-br from-sky-500/40 via-purple-500/30 to-violet-600/40" />
-        </div>
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-12 px-6 pb-24 pt-32 text-center text-white">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1 text-sm font-medium">
-            <Sparkles className="h-4 w-4" />
-            차세대 멀티모달 AI 스튜디오
-          </span>
-          <div className="max-w-3xl space-y-6">
-            <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">
-              한 번의 아이디어로 텍스트, 이미지, 사운드를 완성하세요
+    <div className="flex flex-col">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-black">
+        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_70%)]" />
+        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-20 md:flex-row md:items-center">
+          <div className="flex-1 space-y-6 text-slate-100">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 py-1 text-xs font-semibold uppercase">
+              AI 코드 대결 플랫폼
+            </span>
+            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
+              방 생성에서 이의신청까지, AI가 심판하는 실전 코드 대결
             </h1>
-            <p className="text-lg text-slate-200 md:text-xl">
-              AI Creative Studio는 팀이 사랑하는 경험을 만들기 위해 설계된 올인원 제작 플랫폼입니다. 생성형 AI를 가장 자연스럽게 활용해 보세요.
+            <p className="text-base text-slate-300 md:text-lg">
+              방 생성 → 참가(SSO) → AI 출제 → 제한시간 내 풀이 → 샌드박스 채점 → GPT-5 심판 리포트 → ELO/포인트 반영 → 코드 공개 여부 선택 → 이의신청까지 완전한 루프를 제공합니다.
             </p>
-          </div>
-          <div className="flex flex-col items-center gap-4 md:flex-row">
-            <Link
-              href={`/${defaultLocale}/dashboard`}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-base font-semibold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:scale-[1.02] hover:bg-slate-100"
-            >
-              대시보드 둘러보기
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a
-              href="#workflow"
-              className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3 text-base font-semibold text-white transition hover:border-white hover:bg-white/10"
-            >
-              워크플로우 살펴보기
-            </a>
-          </div>
-          <div className="w-full max-w-4xl rounded-3xl border border-white/20 bg-white/5 p-6 text-left shadow-2xl shadow-sky-500/20 backdrop-blur">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-sm uppercase tracking-[0.3em] text-slate-300">Realtime Canvas</p>
-                <h2 className="text-2xl font-semibold">브랜드 캠페인 생성</h2>
+            <div className="flex flex-col gap-4 md:flex-row">
+              <Link
+                href="/rooms"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-sky-500 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-sky-500/30 transition hover:shadow-sky-400/50"
+              >
+                대결하기
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/rooms?spectate=true"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:border-sky-300 hover:text-sky-200"
+              >
+                관전하기
+                <Eye className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="grid gap-4 text-sm text-slate-300 md:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="font-semibold text-white">모드</p>
+                <p className="mt-2">1v1 / 1v1v1 (최대 인원 2/3/4)</p>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-300">
-                <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1">
-                  <Sparkles className="h-3.5 w-3.5" /> AI Assist
-                </span>
-                <span className="rounded-full bg-white/5 px-3 py-1">Live</span>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="font-semibold text-white">언어</p>
+                <p className="mt-2">Python · C++ · Java</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="font-semibold text-white">보상</p>
+                <p className="mt-2">포인트 → 기프티콘 교환 (현금 환전 불가)</p>
               </div>
             </div>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl bg-white/5 p-4">
-                <h3 className="text-sm font-semibold text-slate-100">브랜드 메시지</h3>
-                <p className="mt-2 text-sm text-slate-300">
-                  "다가오는 봄 캠페인을 위한 활기찬 톤을 유지하며, 지속 가능성을 강조해 주세요."
-                </p>
+          </div>
+          <div className="flex-1 space-y-6 rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+            <div className="flex items-center justify-between text-xs text-slate-300">
+              <span className="inline-flex items-center gap-2 rounded-full bg-sky-500/20 px-3 py-1 text-sky-100">
+                <ShieldCheck className="h-4 w-4" /> 공정성 모니터링
+              </span>
+              <span className="inline-flex items-center gap-2 text-slate-200">
+                <Timer className="h-4 w-4" /> 타임 리밋 20분
+              </span>
+            </div>
+            <div className="space-y-3 text-sm text-slate-200">
+              <div className="flex items-center justify-between rounded-xl bg-black/30 px-4 py-3">
+                <span>Docker/Firecracker 샌드박스</span>
+                <span className="rounded-full bg-sky-500/20 px-3 py-1 text-xs text-sky-200">네트워크 차단</span>
               </div>
-              <div className="rounded-2xl bg-white/5 p-4">
-                <h3 className="text-sm font-semibold text-slate-100">비주얼 스타일</h3>
-                <ul className="mt-2 space-y-1 text-sm text-slate-300">
-                  <li>• 파스텔 그라데이션 배경</li>
-                  <li>• 자연광과 필름 그레인</li>
-                  <li>• 손글씨 느낌의 타이포그래피</li>
+              <div className="flex items-center justify-between rounded-xl bg-black/30 px-4 py-3">
+                <span>GPTZero 기반 AI 사용 탐지</span>
+                <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs text-amber-200">붙여넣기 감시</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/30 px-4 py-3">
+                <span>표절 방지 (AST/토큰 분포)</span>
+                <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-200">로그 저장</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl bg-black/30 px-4 py-3">
+                <span>이의신청 SLA</span>
+                <span className="rounded-full bg-purple-500/20 px-3 py-1 text-xs text-purple-200">X일 이내 1차 답변</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-950">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-16 md:flex-row">
+          <div className="flex-1 space-y-4">
+            <h2 className="text-2xl font-semibold text-white md:text-3xl">핵심 루프 & 사용자 흐름</h2>
+            <p className="text-slate-300">
+              메인 화면의 히어로 CTA에서 방 생성/관전으로 진입하고, SNS 로그인(Google/GitHub/Kakao/Naver)만 허용하여 간편하게 참가합니다.
+              방 목록은 난이도 아이콘(🟢/🟡/🔴), 인원 {"{현재}/{제한}"}, 정렬·필터, 관전 가능 👀 표시를 제공합니다.
+              방 생성 시 필수/옵션 필드(비공개 비번, 언어 선택, 타임리밋 10/20/30, 관전 허용)를 구성했습니다.
+            </p>
+            <div className="grid gap-4 text-sm text-slate-200 md:grid-cols-3">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Users className="mb-2 h-5 w-5 text-sky-400" />
+                <p className="font-semibold">SSO 참가</p>
+                <p className="mt-1 text-slate-300">Google/GitHub/Kakao/Naver로 로그인하고 닉네임/멤버십을 관리합니다.</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Trophy className="mb-2 h-5 w-5 text-amber-400" />
+                <p className="font-semibold">ELO & 포인트 분리</p>
+                <p className="mt-1 text-slate-300">실력은 ELO, 보상은 포인트로 관리하고 기프티콘으로 교환합니다.</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <ShieldCheck className="mb-2 h-5 w-5 text-emerald-400" />
+                <p className="font-semibold">이의신청 시스템</p>
+                <p className="mt-1 text-slate-300">운영자가 제출 로그/패턴을 열람하고 SLA 내에 답변합니다.</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1 space-y-4 rounded-3xl border border-white/10 bg-white/5 p-6">
+            <h3 className="text-lg font-semibold text-white">모드 & UI 구성</h3>
+            <ul className="space-y-3 text-sm text-slate-200">
+              <li>• 대결 화면: Monaco 에디터, 타이머, 붙여넣기 제어, 제출 → 샌드박스 → GPT-5 심판</li>
+              <li>• 결과: AI 해설 리포트, 승패/ELO/포인트 반영, 코드 공개, 이의신청</li>
+              <li>• 마이페이지: 계정/구독/기타 사이드바, 최근 대결 기록과 포인트 교환 버튼</li>
+              <li>• 모바일: 햄버거 메뉴 + 하단 고정 CTA “대결하기”</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-slate-950/60">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <h2 className="text-2xl font-semibold text-white md:text-3xl">요금제</h2>
+          <p className="mt-2 text-sm text-slate-300">Free / Basic / Pro 3단계 요금제를 제공하며, 환전은 불가능하고 기프티콘 교환만 허용합니다.</p>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            {pricing.map((item) => (
+              <div key={item.plan} className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <h3 className="text-xl font-semibold text-white">{item.plan}</h3>
+                <p className="mt-1 text-sm text-slate-300">{item.description}</p>
+                <p className="mt-4 text-2xl font-bold text-sky-400">{item.price}</p>
+                <ul className="mt-4 space-y-2 text-sm text-slate-200">
+                  {item.perks.map((perk) => (
+                    <li key={perk}>• {perk}</li>
+                  ))}
                 </ul>
               </div>
-              <div className="rounded-2xl bg-white/5 p-4">
-                <h3 className="text-sm font-semibold text-slate-100">결과 미리보기</h3>
-                <p className="mt-2 text-sm text-slate-300">
-                  캠페인 테마에 맞춘 이미지, SNS 캡션, 짧은 배경 음악이 동시에 준비됩니다.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      <section className="bg-background">
-        <div className="mx-auto max-w-6xl px-6 py-24">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">팀을 위한 스마트한 워크플로우</h2>
-            <p className="mt-4 text-base text-muted-foreground">
-              모든 제작 단계가 하나의 화면에서 연결됩니다. 더 빠르고 더 일관성 있게 캠페인을 완성하세요.
-            </p>
-          </div>
-          <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="group relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-sky-500/10 transition group-hover:scale-150" />
-                <feature.icon className="h-10 w-10 text-sky-600" />
-                <h3 className="mt-6 text-xl font-semibold">{feature.title}</h3>
-                <p className="mt-3 text-sm text-muted-foreground">{feature.description}</p>
+      <section className="bg-slate-900">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <h2 className="text-2xl font-semibold text-white md:text-3xl">공정성과 보안</h2>
+          <p className="mt-2 text-sm text-slate-300">모든 제출 로그와 키 입력 패턴을 저장하고, 부정 행위 적발 시 영구 정지와 이의신청 경로를 제공합니다.</p>
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            {fairness.map((item) => (
+              <div key={item.title} className="rounded-3xl border border-white/10 bg-white/5 p-6 text-sm text-slate-200">
+                <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+                <p className="mt-2 text-slate-300">{item.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section id="workflow" className="relative overflow-hidden bg-slate-950 py-24 text-white">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.15),_rgba(15,23,42,0.9))]" />
-        <div className="mx-auto flex max-w-5xl flex-col gap-12 px-6 md:flex-row md:items-center">
-          <div className="max-w-xl space-y-6">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-xs font-semibold uppercase tracking-[0.35em] text-slate-300">
-              Workflow
-            </span>
-            <h2 className="text-3xl font-semibold md:text-4xl">아이디어에서 배포까지 3단계</h2>
-            <p className="text-base text-slate-200">
-              크리에이티브 팀이 실제로 사용하는 프로세스를 기반으로 설계했습니다. 각 단계는 AI의 제안과 팀의 통제권이 균형을 이루도록 맞춰져 있습니다.
-            </p>
-          </div>
-          <div className="flex-1 space-y-8">
-            {milestones.map((milestone, index) => (
-              <div key={milestone.title} className="relative rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-                <div className="absolute -left-10 top-1/2 hidden h-px w-8 -translate-y-1/2 bg-gradient-to-r from-transparent via-white/70 to-white md:block" />
-                <div className="flex items-start gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-500/20 text-lg font-semibold text-white">
-                    {index + 1}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">{milestone.title}</h3>
-                    <p className="mt-2 text-sm text-slate-200">{milestone.description}</p>
-                  </div>
-                </div>
+      <section className="bg-slate-950">
+        <div className="mx-auto max-w-6xl px-6 py-16">
+          <h2 className="text-2xl font-semibold text-white md:text-3xl">2주 MVP 로드맵</h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {roadmap.map((step) => (
+              <div key={step.range} className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">
+                <p className="font-semibold text-sky-300">{step.range}</p>
+                <p className="mt-2 text-slate-300">{step.task}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-background">
-        <div className="mx-auto max-w-5xl px-6 py-24">
-          <div className="text-center">
-            <h2 className="text-3xl font-semibold md:text-4xl">만족하는 팀들의 이야기</h2>
-            <p className="mt-4 text-base text-muted-foreground">
-              다양한 산업의 팀들이 AI Creative Studio로 새로운 가능성을 열고 있습니다.
-            </p>
+      <section className="bg-slate-900/80">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-16 md:flex-row md:items-center">
+          <div className="flex-1 space-y-3 text-slate-200">
+            <h2 className="text-2xl font-semibold text-white md:text-3xl">백로그와 확장성</h2>
+            <p>리플레이, 시즌 랭킹/업적, 관전 채팅, 연습 모드, 아바타·테마 상점 등 백로그 기능을 추가할 수 있는 이벤트 스키마를 설계했습니다.</p>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
-            {testimonials.map((testimonial) => (
-              <figure
-                key={testimonial.name}
-                className="rounded-3xl border border-slate-200/70 bg-white p-8 shadow-sm"
-              >
-                <blockquote className="text-base text-slate-700">“{testimonial.quote}”</blockquote>
-                <figcaption className="mt-6 text-sm font-medium text-slate-500">
-                  {testimonial.name} · {testimonial.role}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-          <div className="mt-16 flex flex-col items-center gap-4 rounded-3xl bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 p-10 text-center text-white">
-            <h3 className="text-2xl font-semibold">이제 새로운 캠페인을 시작해 볼까요?</h3>
-            <p className="max-w-2xl text-sm text-white/90">
-              무료 체험으로 팀에 가장 적합한 워크플로우를 구성해 보세요. 실시간 협업과 정책 검증이 기본으로 제공됩니다.
-            </p>
-            <Link
-              href={`/${defaultLocale}/dashboard`}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-black/10 transition hover:scale-105"
-            >
-              지금 바로 시작하기
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+          <div className="flex-1 space-y-2 text-sm text-slate-300">
+            <p>• 리플레이(제출 타임라인 시각화)</p>
+            <p>• 시즌 랭킹 / 업적 뱃지</p>
+            <p>• 관전 채팅 / 하이라이트 공유 / 팔로우 알림</p>
+            <p>• 연습 모드 / 커리큘럼 추천</p>
+            <p>• 아바타·테마 상점 (비금전 보상)</p>
           </div>
         </div>
       </section>
